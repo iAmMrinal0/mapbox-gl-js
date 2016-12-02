@@ -64,6 +64,7 @@ class FillStyleLayer extends StyleLayer {
     }
 
     createBucket(options) {
+        console.log(options);
         return new FillBucket(options);
     }
 }
