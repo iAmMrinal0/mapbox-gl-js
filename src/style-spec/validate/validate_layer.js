@@ -62,7 +62,6 @@ module.exports = function validateLayer(options) {
             } else if (sourceType === 'vector' && type === 'raster') {
                 errors.push(new ValidationError(key, layer.source, 'layer "%s" requires a raster source', layer.id));
             } else if (sourceType === 'raster' && type !== 'raster') {
-                console.log(source, type);
                 errors.push(new ValidationError(key, layer.source, 'layer "%s" requires a vector source', layer.id));
             } else if (sourceType === 'vector' && !layer['source-layer']) {
                 errors.push(new ValidationError(key, layer, 'layer "%s" must specify a "source-layer"', layer.id));
