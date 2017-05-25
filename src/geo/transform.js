@@ -192,7 +192,7 @@ class Transform {
      * @param {number} options.maxzoom
      * @param {boolean} options.roundZoom
      * @param {boolean} options.reparseOverscaled
-     * @param {boolean} options.renderWorldCopies
+     * @param {boolean} options.extraBorder
      * @returns {Array<Tile>} tiles
      */
     coveringTiles(
@@ -202,7 +202,7 @@ class Transform {
         maxzoom: number,
         roundZoom: boolean,
         reparseOverscaled: boolean,
-        renderWorldCopies: boolean
+        extraBorder: boolean,
       }
     ) {
         let z = this.coveringZoomLevel(options);
@@ -219,7 +219,7 @@ class Transform {
             this.pointCoordinate(new Point(this.width, this.height), z),
             this.pointCoordinate(new Point(0, this.height), z)
         ];
-        return TileCoord.cover(z, cornerCoords, options.reparseOverscaled ? actualZ : z, this._renderWorldCopies)
+        return TileCoord.cover(z, cornerCoords, options.reparseOverscaled ? actualZ : z, this._renderWorldCopies, options.extraBorder)
             .sort((a, b) => centerPoint.dist(a) - centerPoint.dist(b));
     }
 
