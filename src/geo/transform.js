@@ -201,8 +201,7 @@ class Transform {
         minzoom: number,
         maxzoom: number,
         roundZoom: boolean,
-        reparseOverscaled: boolean,
-        extraBorder: boolean,
+        reparseOverscaled: boolean
       }
     ) {
         let z = this.coveringZoomLevel(options);
@@ -219,7 +218,7 @@ class Transform {
             this.pointCoordinate(new Point(this.width, this.height), z),
             this.pointCoordinate(new Point(0, this.height), z)
         ];
-        return TileCoord.cover(z, cornerCoords, options.reparseOverscaled ? actualZ : z, this._renderWorldCopies, options.extraBorder)
+        return TileCoord.cover(z, cornerCoords, options.reparseOverscaled ? actualZ : z, this._renderWorldCopies)
             .sort((a, b) => centerPoint.dist(a) - centerPoint.dist(b));
     }
 
