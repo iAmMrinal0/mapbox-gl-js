@@ -30,7 +30,6 @@ function drawTerrain(painter, sourceCache, layer, coords) {
         if (!tile.texture) {
             prepareTerrain(painter, tile, layer);
         }
-        console.log(tile);
         // painter.enableTileClippingMask(coord);
         tile.texture.render(tile, layer);
 
@@ -89,10 +88,15 @@ class TerrainTexture {
         gl.uniform4fv(program.u_highlight, parseColor(layer.paint["terrain-highlight-color"]));
         gl.uniform4fv(program.u_accent, parseColor(layer.paint["terrain-accent-color"]));
 
-        const buffer = this.painter.rasterBoundsBuffer;
-        const vao = this.painter.rasterBoundsVAO;
-        // const buffer = this.painter.incompleteTerrainBoundsBuffer;
-        // const vao = this.painter.incompleteTerrainBoundsVAO;
+        let bordersLoaded = true;
+        for (let key in tile.neighboringTiles) {
+            if (!tile.neighboringTiles[key].backfilled) {
+                bordersLoaded = false;
+                break;
+            }
+        }
+        const buffer = !bordersLoaded ? this.painter.incompleteTerrainBoundsBuffer : this.painter.rasterBoundsBuffer;
+        const vao = !bordersLoaded ? this.painter.incompleteTerrainBoundsVAO : this.painter.rasterBoundsVAO;
         vao.bind(gl, program, buffer);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.length);
     }

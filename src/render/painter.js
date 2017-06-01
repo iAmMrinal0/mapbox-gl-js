@@ -118,11 +118,12 @@ class Painter {
         this.rasterBoundsBuffer = Buffer.fromStructArray(rasterBoundsArray, Buffer.BufferType.VERTEX);
         this.rasterBoundsVAO = new VertexArrayObject();
 
+        // used if terrain tile isn't fully backfilled in order to prevent seams with missing data from flashing
         const incompleteTerrainBoundsArray = new RasterBoundsArray();
         incompleteTerrainBoundsArray.emplaceBack(0, 0, 0, 0)
-        incompleteTerrainBoundsArray.emplaceBack(EXTENT - EXTENT/512, 0, EXTENT - EXTENT/512, 0 );
-        incompleteTerrainBoundsArray.emplaceBack(0, EXTENT - EXTENT/512, 0, EXTENT - EXTENT/512)
-        incompleteTerrainBoundsArray.emplaceBack(EXTENT - EXTENT/512, EXTENT - EXTENT/512, EXTENT - EXTENT/512, EXTENT - EXTENT/512);
+        incompleteTerrainBoundsArray.emplaceBack(EXTENT, 0, EXTENT - (4 * EXTENT/512), 0 );
+        incompleteTerrainBoundsArray.emplaceBack(0, EXTENT, 0, EXTENT - (4 * EXTENT/512))
+        incompleteTerrainBoundsArray.emplaceBack(EXTENT, EXTENT, EXTENT - (4 * EXTENT/512), EXTENT - (4 * EXTENT/512));
         this.incompleteTerrainBoundsBuffer = Buffer.fromStructArray(incompleteTerrainBoundsArray, Buffer.BufferType.VERTEX);
         this.incompleteTerrainBoundsVAO = new VertexArrayObject();
 
@@ -134,7 +135,7 @@ class Painter {
         if (this.extTextureFilterAnisotropic) {
             this.extTextureFilterAnisotropicMax = gl.getParameter(this.extTextureFilterAnisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
         }
-    }
+    };
 
     /*
      * Reset the color buffers of the drawing canvas.
