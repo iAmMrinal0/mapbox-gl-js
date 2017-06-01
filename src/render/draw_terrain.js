@@ -109,12 +109,24 @@ function setLight(program, painter) {
 
     const _lp = light.calculated.position,
         lightPos = [_lp.x, _lp.y, _lp.z];
+    // console.log(toSpherical(lightPos));
     const lightMat = mat3.create();
     if (light.calculated.anchor === 'viewport') mat3.fromRotation(lightMat, -painter.transform.angle);
     vec3.transformMat3(lightPos, lightPos, lightMat);
+    // console.log(toSpherical(lightPos));
+    // TODO figure out why after > 140 degrees of rotation of the map, the light gets flipped.
 
     gl.uniform3fv(program.u_lightpos, lightPos);
     gl.uniform1f(program.u_lightintensity, light.calculated.intensity);
+}
+
+// TODO delete
+function toSpherical(lightpos){
+    const r = Math.sqrt(Math.pow(lightpos[0],2.0) + Math.pow(lightpos[1], 2.0)+ Math.pow(lightpos[2], 2.0));
+    const polar = Math.acos(lightpos[2]/r);
+    const azimuth =  Math.atan(lightpos[1]/lightpos[0]);
+
+    return [azimuth * 180/Math.PI, polar * 180/Math.PI, r]
 }
 
 function prepareTerrain(painter, tile, layer) {

@@ -42,7 +42,8 @@ void main() {
     float openness = pixel.b;
     float r = sqrt(pow(u_lightpos.x,2.0) + pow(u_lightpos.y, 2.0)+ pow(u_lightpos.z, 2.0));
     float polar = acos(u_lightpos.z/r);
-    float azimuth = - atan(u_lightpos.y/u_lightpos.x);
+    // TODO figure out why this is funky
+    float azimuth =  atan(u_lightpos.y/u_lightpos.x) - radians(180.0);
 
     if (u_mode == mode_raw) {
         gl_FragColor = texture2D(u_image, v_pos, u_mipmap);
