@@ -166,7 +166,7 @@ class RasterTerrainTileSource extends Evented {
             neighboringTiles.push({ z: z, x: x, y: y + 1, w: w  });
             neighboringTiles.push({ z: z, x: nx, y: y + 1, w: nxw  });
         }
-        const neighboringCoords = {}
+        const neighboringCoords = {};
         neighboringTiles.forEach((t) => {
             const c = new TileCoord(t.z, t.x, t.y, t.w);
             neighboringCoords[c.id] = {backfilled: false};

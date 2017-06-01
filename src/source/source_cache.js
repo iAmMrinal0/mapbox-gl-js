@@ -189,6 +189,7 @@ class SourceCache extends Evented {
         }
         tile.sourceCache = this;
         tile.timeAdded = new Date().getTime();
+
         if (previousState === 'expired') tile.refreshedUponExpiration = true;
         this._setTileReloadTimer(id, tile);
         if (this._source.type === 'raster-terrain') {
@@ -212,8 +213,8 @@ class SourceCache extends Evented {
         for (const key in this._tiles) {
             if (this._tiles[key].state === "loaded" && tile.neighboringTiles[key]) {
                 const borderTile = this._tiles[key];
-                if (!tile.neighboringTiles[key].backfilled) fillBorder(tile, borderTile);
-                if (!borderTile.neighboringTiles[tile.coord.id].backfilled) fillBorder(borderTile, tile);
+                fillBorder(tile, borderTile);
+                fillBorder(borderTile, tile);
             }
         }
 
@@ -222,15 +223,21 @@ class SourceCache extends Evented {
             let dx = borderTile.coord.x - tile.coord.x;
             const dy = borderTile.coord.y - tile.coord.y;
             const dim = Math.pow(2, tile.coord.z);
-            if (dx === 0 && dy === 0) return;
+            if (dx === 0 && dy === 0) {
+                tile.neighboringTiles[borderTile.coord.id].backfilled = true;
+                return;
+            }
 
             if (Math.abs(dy) > 1) {
                 return;
             }
             if (Math.abs(dx) > 1) {
                 // Adjust the delta coordinate for world wraparound.
-                if (Math.abs(dx + dim) === 1) { dx += dim; }
-                else if (Math.abs(dx - dim) === 1) { dx -= dim; }
+                if (Math.abs(dx + dim) === 1) {
+                    dx += dim;
+                } else if (Math.abs(dx - dim) === 1) {
+                    dx -= dim;
+                }
             }
             if (!borderTile.dem || !tile.dem) return;
             tile.dem.backfillBorders(borderTile.dem, dx, dy);

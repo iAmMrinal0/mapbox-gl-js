@@ -12,7 +12,6 @@ module.exports = drawTerrain;
 //size of raster terrain tile
 const TERRAIN_TILE_WIDTH = 256;
 const TERRAIN_TILE_HEIGHT = 256;
-const DEG2RAD = Math.PI / 180.0;
 
 
 function drawTerrain(painter, sourceCache, layer, coords) {
@@ -30,7 +29,16 @@ function drawTerrain(painter, sourceCache, layer, coords) {
         if (!tile.texture) {
             prepareTerrain(painter, tile, layer);
         }
-        // painter.enableTileClippingMask(coord);
+
+        // todo move?
+        tile.bordersLoaded = true;
+        for (const key in tile.neighboringTiles) {
+            if (!tile.neighboringTiles[key].backfilled && sourceCache._tiles[key]) {
+                tile.bordersLoaded = false;
+                break;
+            }
+        }
+
         tile.texture.render(tile, layer);
 
     }
@@ -88,15 +96,10 @@ class TerrainTexture {
         gl.uniform4fv(program.u_highlight, parseColor(layer.paint["terrain-highlight-color"]));
         gl.uniform4fv(program.u_accent, parseColor(layer.paint["terrain-accent-color"]));
 
-        let bordersLoaded = true;
-        for (let key in tile.neighboringTiles) {
-            if (!tile.neighboringTiles[key].backfilled) {
-                bordersLoaded = false;
-                break;
-            }
-        }
-        const buffer = !bordersLoaded ? this.painter.incompleteTerrainBoundsBuffer : this.painter.rasterBoundsBuffer;
-        const vao = !bordersLoaded ? this.painter.incompleteTerrainBoundsVAO : this.painter.rasterBoundsVAO;
+        // this is to prevent purple/yellow seams from flashing when the dem tiles haven't been totally
+        // backfilled from their neighboring tiles.
+        const buffer = tile.bordersLoaded ? this.painter.rasterBoundsBuffer : this.painter.incompleteTerrainBoundsBuffer;
+        const vao = tile.bordersLoaded ? this.painter.rasterBoundsVAO : this.painter.incompleteTerrainBoundsVAO;
         vao.bind(gl, program, buffer);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.length);
     }
@@ -127,13 +130,13 @@ function setLight(program, painter) {
 }
 
 // TODO delete
-function toSpherical(lightpos){
-    const r = Math.sqrt(Math.pow(lightpos[0],2.0) + Math.pow(lightpos[1], 2.0)+ Math.pow(lightpos[2], 2.0));
-    const polar = Math.acos(lightpos[2]/r);
-    const azimuth =  Math.atan(lightpos[1]/lightpos[0]);
+// function toSpherical(lightpos) {
+//     const r = Math.sqrt(Math.pow(lightpos[0], 2.0) + Math.pow(lightpos[1], 2.0) + Math.pow(lightpos[2], 2.0));
+//     const polar = Math.acos(lightpos[2] / r);
+//     const azimuth =  Math.atan(lightpos[1] / lightpos[0]);
 
-    return [azimuth * 180/Math.PI, polar * 180/Math.PI, r]
-}
+//     return [azimuth * 180 / Math.PI, polar * 180 / Math.PI, r];
+// }
 
 function prepareTerrain(painter, tile, layer) {
     const gl = painter.gl;
