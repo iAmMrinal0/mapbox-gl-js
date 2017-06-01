@@ -118,6 +118,14 @@ class Painter {
         this.rasterBoundsBuffer = Buffer.fromStructArray(rasterBoundsArray, Buffer.BufferType.VERTEX);
         this.rasterBoundsVAO = new VertexArrayObject();
 
+        const incompleteTerrainBoundsArray = new RasterBoundsArray();
+        incompleteTerrainBoundsArray.emplaceBack(0, 0, 0, 0)
+        incompleteTerrainBoundsArray.emplaceBack(EXTENT - EXTENT/512, 0, EXTENT - EXTENT/512, 0 );
+        incompleteTerrainBoundsArray.emplaceBack(0, EXTENT - EXTENT/512, 0, EXTENT - EXTENT/512)
+        incompleteTerrainBoundsArray.emplaceBack(EXTENT - EXTENT/512, EXTENT - EXTENT/512, EXTENT - EXTENT/512, EXTENT - EXTENT/512);
+        this.incompleteTerrainBoundsBuffer = Buffer.fromStructArray(incompleteTerrainBoundsArray, Buffer.BufferType.VERTEX);
+        this.incompleteTerrainBoundsVAO = new VertexArrayObject();
+
         this.extTextureFilterAnisotropic = (
             gl.getExtension('EXT_texture_filter_anisotropic') ||
             gl.getExtension('MOZ_EXT_texture_filter_anisotropic') ||
