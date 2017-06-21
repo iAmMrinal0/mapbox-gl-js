@@ -57,7 +57,7 @@ class TerrainTexture {
         gl.activeTexture(gl.TEXTURE0);
         this.texture = gl.createTexture();
 
-        // needed because SpriteAtlas sets this value to true, which causes the 0 alpha values that we pass to
+        // this is needed because SpriteAtlas sets this value to true, which causes the 0 alpha values that we pass to
         // the terrain_prepare shaders to 0 out all values and render the texture blank.
         gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
 
@@ -71,6 +71,7 @@ class TerrainTexture {
         this.texture.width = this.width;
         this.texture.height = this.height;
 
+        // TODO: can we reuse fbos?
         this.fbo = gl.createFramebuffer();
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
         gl.viewport(0, 0, this.width, this.height);
@@ -85,12 +86,9 @@ class TerrainTexture {
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
-
         gl.uniformMatrix4fv(program.u_matrix, false, posMatrix);
         gl.uniform1i(program.u_image, 0);
         gl.uniform1i(program.u_mode, 7);
-        gl.uniform2fv(program.u_dimension, [256, 256]);
-        gl.uniform1f(program.u_zoom, tile.coord.z);
         gl.uniform1f(program.u_mipmap, 0);
         gl.uniform4fv(program.u_shadow, parseColor(layer.paint["terrain-shadow-color"]));
         gl.uniform4fv(program.u_highlight, parseColor(layer.paint["terrain-highlight-color"]));
@@ -118,11 +116,10 @@ function setLight(program, painter) {
 
     const _lp = light.calculated.position,
         lightPos = [_lp.x, _lp.y, _lp.z];
-    // console.log(toSpherical(lightPos));
+
     const lightMat = mat3.create();
     if (light.calculated.anchor === 'viewport') mat3.fromRotation(lightMat, -painter.transform.angle);
     vec3.transformMat3(lightPos, lightPos, lightMat);
-    // console.log(toSpherical(lightPos));
     // TODO figure out why after > 140 degrees of rotation of the map, the light gets flipped.
 
     gl.uniform3fv(program.u_lightpos, lightPos);
@@ -175,9 +172,6 @@ function prepareTerrain(painter, tile, layer) {
     // Flip rendering at y axis.
     mat4.ortho(matrix, 0, EXTENT, -EXTENT, 0, 0, 1);
     mat4.translate(matrix, matrix, [0, -EXTENT, 0]);
-
-    gl.clearColor(1, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
 
     const program = painter.useProgram('terrainPrepare');
 
