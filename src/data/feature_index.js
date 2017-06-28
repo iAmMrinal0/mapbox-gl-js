@@ -1,3 +1,4 @@
+// @flow
 
 const assert = require('assert');
 const Point = require('point-geometry');
@@ -17,6 +18,9 @@ const multiPolygonIntersectsBufferedMultiPoint = intersection.multiPolygonInters
 const multiPolygonIntersectsMultiPolygon = intersection.multiPolygonIntersectsMultiPolygon;
 const multiPolygonIntersectsBufferedMultiLine = intersection.multiPolygonIntersectsBufferedMultiLine;
 
+import type CollisionTile from '../symbol/collision_tile';
+import type TileCoord from '../source/tile_coord';
+
 const FeatureIndexArray = createStructArrayType({
     members: [
         // the index of the feature in the original vectortile
@@ -29,7 +33,21 @@ const FeatureIndexArray = createStructArrayType({
 });
 
 class FeatureIndex {
-    constructor(coord, overscaling, collisionTile) {
+    grid: Grid;
+    featureIndexArray: any;
+    rawTileData: any;
+    bucketLayerIDs: { [string]: Array<string> };
+    paintPropertyStatistics: any;
+    coord: TileCoord;
+    overscaling: number;
+    x: number;
+    y: number;
+    z: number;
+    collisionTile: CollisionTile;
+    vtLayers: any;
+    sourceLayerCoder: DictionaryCoder;
+
+    constructor(coord: TileCoord, overscaling: number, collisionTile?: CollisionTile) {
         if (coord.grid) {
             const serialized = coord;
             const rawTileData = overscaling;
@@ -44,15 +62,19 @@ class FeatureIndex {
             this.grid = new Grid(EXTENT, 16, 0);
             this.featureIndexArray = new FeatureIndexArray();
         }
+
         this.coord = coord;
         this.overscaling = overscaling;
         this.x = coord.x;
         this.y = coord.y;
         this.z = coord.z - Math.log(overscaling) / Math.LN2;
-        this.setCollisionTile(collisionTile);
+
+        if (collisionTile) {
+            this.setCollisionTile(collisionTile);
+        }
     }
 
-    insert(feature, bucketIndex) {
+    insert(feature: any, bucketIndex: any) {
         const key = this.featureIndexArray.length;
         this.featureIndexArray.emplaceBack(feature.index, feature.sourceLayerIndex, bucketIndex);
         const geometry = loadGeometry(feature);
@@ -73,11 +95,11 @@ class FeatureIndex {
         }
     }
 
-    setCollisionTile(collisionTile) {
+    setCollisionTile(collisionTile: CollisionTile) {
         this.collisionTile = collisionTile;
     }
 
-    serialize(transferables) {
+    serialize(transferables?: Array<Transferable>) {
         const grid = this.grid.toArrayBuffer();
         if (transferables) {
             transferables.push(grid);
@@ -93,7 +115,7 @@ class FeatureIndex {
     }
 
     // Finds features in this tile at a particular position.
-    query(args, styleLayers) {
+    query(args: any, styleLayers: any) {
         if (!this.vtLayers) {
             this.vtLayers = new vt.VectorTile(new Protobuf(this.rawTileData)).layers;
             this.sourceLayerCoder = new DictionaryCoder(this.vtLayers ? Object.keys(this.vtLayers).sort() : ['_geojsonTileLayer']);
@@ -165,7 +187,7 @@ class FeatureIndex {
         return result;
     }
 
-    filterMatching(result, matching, array, queryGeometry, filter, filterLayerIDs, styleLayers, bearing, pixelsToTileUnits) {
+    filterMatching(result: any, matching: any, array: any, queryGeometry: any, filter: any, filterLayerIDs: any, styleLayers: any, bearing: any, pixelsToTileUnits: any) {
         let previousIndex;
         for (let k = 0; k < matching.length; k++) {
             const index = matching[k];
@@ -246,7 +268,7 @@ class FeatureIndex {
         }
     }
 
-    hasLayer(id) {
+    hasLayer(id: any) {
         for (const index in this.bucketLayerIDs) {
             for (const layerID of this.bucketLayerIDs[index]) {
                 if (id === layerID) return true;
@@ -259,7 +281,7 @@ class FeatureIndex {
     // Get the given paint property value; if a feature is not provided and the
     // property is data-driven, then default to the maximum value that the
     // property takes in the (tile, layer) that this FeatureIndex is associated with
-    getPaintValue(property, layer, feature) {
+    getPaintValue(property: any, layer: any, feature: any) {
         const featureConstant = layer.isPaintValueFeatureConstant(property);
         if (featureConstant || feature) {
             const featureProperties = feature ? feature.properties : {};
@@ -290,7 +312,7 @@ function getLineWidth(lineWidth, lineGapWidth) {
     }
 }
 
-function translate(queryGeometry, translate, translateAnchor, bearing, pixelsToTileUnits) {
+function translate(queryGeometry, translate: any, translateAnchor, bearing, pixelsToTileUnits) {
     if (!translate[0] && !translate[1]) {
         return queryGeometry;
     }
