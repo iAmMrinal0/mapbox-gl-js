@@ -3,14 +3,14 @@
 const EXTENT = require('../data/extent');
 const mat4 = require('@mapbox/gl-matrix').mat4;
 
-module.exports = drawTerrain;
+module.exports = drawHillshade;
 
 //size of raster terrain tile
 const TERRAIN_TILE_WIDTH = 256;
 const TERRAIN_TILE_HEIGHT = 256;
 
 
-function drawTerrain(painter, sourceCache, layer, coords) {
+function drawHillshade(painter, sourceCache, layer, coords) {
     if (painter.isOpaquePass) return;
 
     painter.setDepthSublayer(0);
@@ -23,7 +23,7 @@ function drawTerrain(painter, sourceCache, layer, coords) {
     for (const coord of coords) {
         const tile = sourceCache.getTile(coord);
         if (painter.isPrepareFbosPass) {
-            if (!tile.terrainTexture) prepareTerrain(painter, tile, layer);
+            if (!tile.hillshadeTexture) prepareTerrain(painter, tile, layer);
         } else {
             tile.bordersLoaded = true;
             for (const key in tile.neighboringTiles) {
@@ -33,14 +33,14 @@ function drawTerrain(painter, sourceCache, layer, coords) {
                 }
             }
 
-            tile.terrainTexture.render(tile, layer);
+            tile.hillshadeTexture.render(tile, layer);
         }
     }
 }
 
 // TODO create OffscreenTexture class for extrusions + terrain
 // preprocessing ?
-class TerrainTexture {
+class HillshadeTexture {
     constructor (gl, painter, layer) {
         this.gl = gl;
         this.width = TERRAIN_TILE_WIDTH;
@@ -74,7 +74,7 @@ class TerrainTexture {
 
     render(tile, layer) {
         const gl = this.painter.gl;
-        const program = this.painter.useProgram('terrain');
+        const program = this.painter.useProgram('hillshade');
         const posMatrix = this.painter.transform.calculatePosMatrix(tile.coord);
         setLight(program, this.painter);
 
@@ -84,14 +84,14 @@ class TerrainTexture {
         gl.uniform1i(program.u_image, 0);
         gl.uniform1i(program.u_mode, 7);
         gl.uniform1f(program.u_mipmap, 0);
-        gl.uniform4fv(program.u_shadow, layer.paint["terrain-shadow-color"]);
-        gl.uniform4fv(program.u_highlight, layer.paint["terrain-highlight-color"]);
-        gl.uniform4fv(program.u_accent, layer.paint["terrain-accent-color"]);
+        gl.uniform4fv(program.u_shadow, layer.paint["hillshade-shadow-color"]);
+        gl.uniform4fv(program.u_highlight, layer.paint["hillshade-highlight-color"]);
+        gl.uniform4fv(program.u_accent, layer.paint["hillshade-accent-color"]);
 
         // this is to prevent purple/yellow seams from flashing when the dem tiles haven't been totally
         // backfilled from their neighboring tiles.
-        const buffer = tile.bordersLoaded ? this.painter.rasterBoundsBuffer : this.painter.incompleteTerrainBoundsBuffer;
-        const vao = tile.bordersLoaded ? this.painter.rasterBoundsVAO : this.painter.incompleteTerrainBoundsVAO;
+        const buffer = tile.bordersLoaded ? this.painter.rasterBoundsBuffer : this.painter.incompleteHillshadeBoundsBuffer;
+        const vao = tile.bordersLoaded ? this.painter.rasterBoundsVAO : this.painter.incompleteHillshadeBoundsVAO;
         vao.bind(gl, program, buffer);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.length);
     }
@@ -148,14 +148,14 @@ function prepareTerrain(painter, tile, layer) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-    tile.terrainTexture = new TerrainTexture(gl, painter, layer, tile);
+    tile.hillshadeTexture = new HillshadeTexture(gl, painter, layer, tile);
 
     const matrix = mat4.create();
     // Flip rendering at y axis.
     mat4.ortho(matrix, 0, EXTENT, -EXTENT, 0, 0, 1);
     mat4.translate(matrix, matrix, [0, -EXTENT, 0]);
 
-    const program = painter.useProgram('terrainPrepare');
+    const program = painter.useProgram('hillshadePrepare');
 
     gl.uniformMatrix4fv(program.u_matrix, false, matrix);
 
@@ -169,6 +169,6 @@ function prepareTerrain(painter, tile, layer) {
     vao.bind(gl, program, buffer);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.length);
 
-    tile.terrainTexture.unbindFramebuffer();
+    tile.hillshadeTexture.unbindFramebuffer();
     tile.prepared = true;
 }

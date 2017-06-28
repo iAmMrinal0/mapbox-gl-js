@@ -372,8 +372,8 @@
             }
           }
         },
-        "raster-terrain": {
-            "doc": "Terrain visualization based on DEM data.",
+        "hillshade": {
+            "doc": "Client-side hillshading visualization based on DEM data. Currently, the implementation only supports Mapbox Terrain RGB tiles.",
             "sdk-support": {
               "basic functionality": {
                 "js": "vnext"
@@ -446,7 +446,7 @@
     "layout_fill-extrusion",
     "layout_symbol",
     "layout_raster",
-    "layout_terrain",
+    "layout_hillshade",
     "layout_background"
   ],
   "layout_background": {
@@ -1598,7 +1598,7 @@
       }
     }
   },
-  "layout_terrain": {
+  "layout_hillshade": {
     "visibility": {
       "type": "enum",
       "function": "piecewise-constant",
@@ -1824,7 +1824,7 @@
     "paint_fill-extrusion",
     "paint_symbol",
     "paint_raster",
-    "paint_terrain",
+    "paint_hillshade",
     "paint_background"
   ],
   "paint_fill": {
@@ -3132,29 +3132,29 @@
       }
     }
   },
-  "paint_terrain": {
-    "terrain-shadow-color": {
+  "paint_hillshade": {
+    "hillshade-shadow-color": {
       "type": "color",
       "default": "#0000FF",
-      "doc": "The color of the terrain that faces away from the light source.",
+      "doc": "The shading color of areas that face away from the light source.",
       "function": "interpolated",
       "zoom-function": true,
       "property-function": true,
       "transition": true
     },
-    "terrain-highlight-color": {
+    "hillshade-highlight-color": {
       "type": "color",
       "default": "#FFFF00",
-      "doc": "The color of the terrain that faces towards the light source.",
+      "doc": "The shading color of areas that faces towards the light source.",
       "function": "interpolated",
       "zoom-function": true,
       "property-function": true,
       "transition": true
     },
-    "terrain-accent-color": {
+    "hillshade-accent-color": {
       "type": "color",
       "default": "#000000",
-      "doc": "The color used to accentuate rugged terrain with sharp cliffs and gorges.",
+      "doc": "The shading color used to accentuate rugged terrain like sharp cliffs and gorges.",
       "function": "interpolated",
       "zoom-function": true,
       "property-function": true,
