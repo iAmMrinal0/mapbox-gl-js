@@ -147,7 +147,7 @@ function typeCheckExpression(expected: Type, e: TypedExpression) /*: TypedExpres
                     if (result.errors) {
                         errors.push.apply(errors, result.errors);
                     } else {
-                        checkedGroup.push(result);
+                        checkedGroup.push(((result: any): TypedLiteralExpression));
                     }
                 }
                 matchInputs.push(checkedGroup);
@@ -156,7 +156,7 @@ function typeCheckExpression(expected: Type, e: TypedExpression) /*: TypedExpres
 
         if (errors.length > 0) return { errors };
 
-        const ret = {
+        return {
             literal: false,
             name: e.name,
             type: lambda(resultType, ...resolvedParams),
@@ -164,8 +164,6 @@ function typeCheckExpression(expected: Type, e: TypedExpression) /*: TypedExpres
             key: e.key,
             matchInputs
         };
-
-        return ret;
     }
 }
 
@@ -268,7 +266,7 @@ function resolveTypenamesIfPossible(type: Type, typenames: {[string]: Type}, sta
     if (type.kind === 'typename') return typenames[type.typename] || type;
 
     const resolve = (t) => resolveTypenamesIfPossible(t, typenames, stack.concat(type));
-    if (type.kind === 'array') return array(resolve(type.itemType, typenames), type.N);
+    if (type.kind === 'array') return array(resolve(type.itemType), type.N);
     if (type.kind === 'variant') return variant(...type.members.map(resolve));
     if (type.kind === 'nargs') return nargs(type.N, ...type.types.map(resolve));
     if (type.kind === 'lambda') return lambda(resolve(type.result), ...type.params.map(resolve));
