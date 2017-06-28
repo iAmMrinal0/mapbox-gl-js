@@ -372,14 +372,6 @@
             }
           }
         },
-        "terrain": {
-            "doc": "Terrain visualization based on DEM data.",
-            "sdk-support": {
-              "basic functionality": {
-                "js": "vnext"
-              }
-            }
-        },
         "raster-terrain": {
             "doc": "Terrain visualization based on DEM data.",
             "sdk-support": {

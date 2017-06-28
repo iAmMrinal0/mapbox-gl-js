@@ -1,7 +1,6 @@
 'use strict';
 
 const EXTENT = require('../data/extent');
-const parseColor = require('./../style-spec/util/parse_color');
 const mat4 = require('@mapbox/gl-matrix').mat4;
 
 module.exports = drawTerrain;
@@ -85,9 +84,9 @@ class TerrainTexture {
         gl.uniform1i(program.u_image, 0);
         gl.uniform1i(program.u_mode, 7);
         gl.uniform1f(program.u_mipmap, 0);
-        gl.uniform4fv(program.u_shadow, parseColor(layer.paint["terrain-shadow-color"]));
-        gl.uniform4fv(program.u_highlight, parseColor(layer.paint["terrain-highlight-color"]));
-        gl.uniform4fv(program.u_accent, parseColor(layer.paint["terrain-accent-color"]));
+        gl.uniform4fv(program.u_shadow, layer.paint["terrain-shadow-color"]);
+        gl.uniform4fv(program.u_highlight, layer.paint["terrain-highlight-color"]);
+        gl.uniform4fv(program.u_accent, layer.paint["terrain-accent-color"]);
 
         // this is to prevent purple/yellow seams from flashing when the dem tiles haven't been totally
         // backfilled from their neighboring tiles.
