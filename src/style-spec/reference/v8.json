@@ -3167,41 +3167,6 @@
       "zoom-function": true,
       "property-function": true,
       "transition": true
-    },
-    "terrain-illumination-direction": {
-      "type": "number",
-      "default": 135,
-      "period": 360,
-      "units": "degrees",
-      "function": "interpolated",
-      "zoom-function": true,
-      "property-function": true,
-      "doc": "Direction of the lightsource. Defaults to top left."
-    },
-    "terrain-illumination-alignment": {
-      "type": "enum",
-      "function": "piecewise-constant",
-      "zoom-function": true,
-      "property-function": true,
-      "values": {
-        "map": {
-            "doc": "The terrain illumination is relative to the north-west direction."
-        },
-        "viewport": {
-            "doc": "The terrain illumination is relative to the top left of the viewport."
-        }
-      },
-      "default": "viewport",
-      "doc": "Direction of light source when map is rotated."
-    },
-    "terrain-exaggeration": {
-      "type": "number",
-      "doc": "Intensity of the terrain",
-      "default": 1,
-      "minimum": 0,
-      "function": "interpolated",
-      "zoom-function": true,
-      "transition": true
     }
   },
   "paint_background": {
