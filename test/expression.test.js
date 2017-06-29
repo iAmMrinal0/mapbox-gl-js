@@ -3,7 +3,6 @@
 require('flow-remove-types/register');
 const util = require('../src/util/util');
 const expressionSuite = require('./integration').expression;
-const expressions = require('../src/style-spec/function/expressions');
 const compileExpression = require('../src/style-spec/function/compile');
 
 let tests;
@@ -13,7 +12,7 @@ if (process.argv[1] === __filename && process.argv.length > 2) {
 }
 
 expressionSuite.run('js', {tests: tests}, (fixture) => {
-    const compiled = compileExpression(expressions, fixture.expression);
+    const compiled = compileExpression(fixture.expression);
 
     const testResult = {
         compileResult: util.pick(compiled, ['result', 'js', 'isFeatureConstant', 'isZoomConstant', 'errors'])

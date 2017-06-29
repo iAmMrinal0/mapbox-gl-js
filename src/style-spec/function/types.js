@@ -30,9 +30,6 @@ const ValueArray = array(ValueType);
 ValueType.members.push(ValueArray);
 ValueType.name = 'Value';
 
-
-const InterpolationType = primitive('interpolation_type');
-
 function primitive(name) /*: PrimitiveType */ {
     return { kind: 'primitive', name };
 }
@@ -85,7 +82,6 @@ module.exports = {
     ColorType,
     ObjectType,
     ValueType,
-    InterpolationType,
     typename,
     variant,
     array,

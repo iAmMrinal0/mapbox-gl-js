@@ -18,8 +18,8 @@
       "result": "error",
       "errors": [
         {
-          "key": "1.4",
-          "error": "Unknown function FAKE_EXPRESSION"
+          "key": "1.4.0",
+          "error": "Unknown expression \"FAKE_EXPRESSION\""
         }
       ]
     }

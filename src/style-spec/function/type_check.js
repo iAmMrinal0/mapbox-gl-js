@@ -6,29 +6,20 @@
 
  import type { ExpressionName } from './expression_name.js';
 
+ import type { Expression } from './expression.js';
+
  export type TypeError = {|
      error: string,
      key: string
  |}
 
- export type TypedLambdaExpression = {|
-     literal: false,
-     name: ExpressionName,
-     type: LambdaType,
-     arguments: Array<TypedExpression>,
-     key: string,
-     matchInputs?: Array<Array<TypedLiteralExpression>>
+ export type TypecheckResult = {|
+    result: 'success',
+    expression: Expression
+ |} | {|
+    result: 'error',
+    errors: Array<TypeError>
  |}
-
- export type TypedLiteralExpression = {|
-     literal: true,
-     value: string | number | boolean | null,
-     type: Type,
-     key: string
- |}
-
- export type TypedExpression = TypedLambdaExpression | TypedLiteralExpression
-
  */
 
 const assert = require('assert');
@@ -36,16 +27,17 @@ const util = require('../../util/util');
 
 const { NullType, lambda, array, variant, nargs } = require('./types');
 
+const { LiteralExpression } = require('./expression');
+
 module.exports = typeCheckExpression;
-module.exports.serialize = serializeExpression;
 
 // typecheck the given expression and return a new TypedExpression
 // tree with all generics resolved
-function typeCheckExpression(expected: Type, e: TypedExpression) /*: TypedExpression | {| errors: Array<TypeError> |} */ {
-    if (e.literal) {
+function typeCheckExpression(expected: Type, e: Expression) /*: TypecheckResult */ {
+    if (e instanceof LiteralExpression) {
         const error = match(expected, e.type);
-        if (error) return { errors: [{ key: e.key, error }] };
-        return e;
+        if (error) return { result: 'error', errors: [{ key: e.key, error }] };
+        return {result: 'success', expression: e};
     } else {
         // e is a lambda expression, so check its result type against the
         // expected type and recursively typecheck its arguments
@@ -58,18 +50,18 @@ function typeCheckExpression(expected: Type, e: TypedExpression) /*: TypedExpres
             // the arguments using e.type, which comes from the expression
             // definition.
             const error = match(expected, e.type.result, {}, typenames);
-            if (error) return { errors: [{ key: e.key, error }] };
+            if (error) return { result: 'error', errors: [{ key: e.key, error }] };
             expected = e.type;
         } else {
             const error = match(expected.result, e.type.result, typenames);
-            if (error) return { errors: [{ key: e.key, error }] };
+            if (error) return { result: 'error', errors: [{ key: e.key, error }] };
         }
 
         // "Unroll" NArgs if present in the parameter list:
         // argCount = nargType.type.length * n + nonNargParameterCount
         // where n is the number of times the NArgs sequence must be
         // repeated.
-        const argValues = e.arguments;
+        const argValues = e.args;
         const expandedParams = [];
         const errors = [];
         for (const param of expected.params) {
@@ -88,6 +80,7 @@ function typeCheckExpression(expected: Type, e: TypedExpression) /*: TypedExpres
 
         if (expandedParams.length !== argValues.length) {
             return {
+                result: 'error',
                 errors: [{
                     key: e.key,
                     error: `Expected ${expandedParams.length} arguments, but found ${argValues.length} instead.`
@@ -112,12 +105,13 @@ function typeCheckExpression(expected: Type, e: TypedExpression) /*: TypedExpres
         const resultType = resolveTypenamesIfPossible(expected.result, typenames);
 
         if (isGeneric(resultType)) return {
+            result: 'error',
             errors: [{key: e.key, error: `Could not resolve ${e.type.result.name}.  This expression must be wrapped in a type conversion, e.g. ["string", ${stringifyExpression(e)}].`}]
         };
 
         // If we already have errors, return early so we don't get duplicates when
         // we typecheck against the resolved argument types
-        if (errors.length) return { errors };
+        if (errors.length) return { result: 'error', errors };
 
         // resolve typenames and recursively type check argument subexpressions
         const resolvedParams = [];
@@ -126,43 +120,39 @@ function typeCheckExpression(expected: Type, e: TypedExpression) /*: TypedExpres
             const t = expandedParams[i];
             const arg = argValues[i];
             const expected = resolveTypenamesIfPossible(t, typenames);
-            const result = typeCheckExpression(expected, arg);
-            if (result.errors) {
-                errors.push.apply(errors, result.errors);
+            const checked = typeCheckExpression(expected, arg);
+            if (checked.result === 'error') {
+                errors.push.apply(errors, checked.errors);
             } else if (errors.length === 0) {
                 resolvedParams.push(expected);
-                checkedArgs.push(result);
+                checkedArgs.push(checked.expression);
             }
         }
 
         // handle 'match' expression input values
-        let matchInputs;
-        if (e.matchInputs) {
-            matchInputs = [];
-            const inputType = resolvedParams[0];
-            for (const inputGroup of e.matchInputs) {
-                const checkedGroup = [];
-                for (const inputValue of inputGroup) {
-                    const result = typeCheckExpression(inputType, inputValue);
-                    if (result.errors) {
-                        errors.push.apply(errors, result.errors);
-                    } else {
-                        checkedGroup.push(((result: any): TypedLiteralExpression));
-                    }
-                }
-                matchInputs.push(checkedGroup);
-            }
-        }
+        // let matchInputs;
+        // if (e.matchInputs) {
+        //     matchInputs = [];
+        //     const inputType = resolvedParams[0];
+        //     for (const inputGroup of e.matchInputs) {
+        //         const checkedGroup = [];
+        //         for (const inputValue of inputGroup) {
+        //             const result = typeCheckExpression(inputType, inputValue);
+        //             if (result.errors) {
+        //                 errors.push.apply(errors, result.errors);
+        //             } else {
+        //                 checkedGroup.push(((result: any): TypedLiteralExpression));
+        //             }
+        //         }
+        //         matchInputs.push(checkedGroup);
+        //     }
+        // }
 
-        if (errors.length > 0) return { errors };
+        if (errors.length > 0) return { result: 'error', errors };
 
         return {
-            literal: false,
-            name: e.name,
-            type: lambda(resultType, ...resolvedParams),
-            arguments: checkedArgs,
-            key: e.key,
-            matchInputs
+            result: 'success',
+            expression: e.applyType(lambda(resultType, ...resolvedParams), checkedArgs)
         };
     }
 }
@@ -232,15 +222,8 @@ function match(expected: Type, t: Type, expectedTypenames: { [string]: Type } = 
     throw new Error(`${expected.name} is not a valid output type.`);
 }
 
-function serializeExpression(e: TypedExpression, withTypes) {
-    if (e.literal) {
-        return e.value;
-    } else {
-        return [ e.name + (withTypes ? `: ${e.type.kind === 'lambda' ? e.type.result.name : e.type.name}` : '') ].concat(e.arguments.map(e => serializeExpression(e, withTypes)));
-    }
-}
-function stringifyExpression(e: TypedExpression, withTypes) /*:string*/ {
-    return JSON.stringify(serializeExpression(e, withTypes));
+function stringifyExpression(e: Expression, withTypes: boolean = false) /*:string*/ {
+    return JSON.stringify(e.serialize(withTypes));
 }
 
 function isGeneric (type, stack = []) {
