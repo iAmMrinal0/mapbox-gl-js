@@ -297,10 +297,8 @@ class Painter {
 
                 }
             }
-
         }
         this.isPrepareFbosPass = false;
-
     }
 
     depthMask(mask) {
